@@ -1,0 +1,23 @@
+services:
+  dashboard:
+    build: .
+    container_name: dashboard
+    restart: unless-stopped
+    ports:
+      - "12345:3000"
+    env_file: .env
+    environment:
+      - PROJECTS_DIR=/data/projects
+      - OPC_DB=/data/opencode/opencode.db
+      - DATA_DIR=/app/data
+      - RING_MIN=2000
+      - RING_MAX=2999
+      - GH_USER=diononline-un
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /home/dion/Projekte:/data/projects:ro
+      - /home/dion/.local/share/opencode/opencode.db:/data/opencode/opencode.db:ro
+      - dashboard_data:/app/data
+
+volumes:
+  dashboard_data:

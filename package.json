@@ -1,0 +1,14 @@
+{
+  "name": "dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ADHD-friendly project dashboard: docker port ring, project status, progress, session resume",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "dockerode": "^4.0.5"
+  }
+}

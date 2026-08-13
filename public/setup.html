@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard · Setup</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+.doc { max-width: 900px; margin: 0 auto; padding: 30px 22px 60px; display: flex; flex-direction: column; gap: 22px; }
+.doc h1 { font-size: 18px; color: var(--accent); text-shadow: 0 0 14px rgba(126,224,195,.4); }
+.doc h2 { font-size: 13px; color: #eef1f5; margin-bottom: 8px; }
+.doc p, .doc li { color: var(--muted); font-size: 12px; line-height: 1.7; }
+.doc a { color: var(--accent); }
+.panel { background: var(--glass); border: 1px solid var(--border); border-radius: 14px; padding: 18px; backdrop-filter: blur(20px); }
+pre { background: rgba(0,0,0,.4); border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-size: 11px; line-height: 1.6; overflow-x: auto; color: #b9c2cc; }
+code { font-family: var(--mono); }
+</style>
+</head>
+<body>
+<div class="doc">
+  <h1>◈ Dashboard Setup</h1>
+
+  <div class="panel">
+    <h2>So wird ein Projekt sichtbar</h2>
+    <p>Das Dashboard scanned automatisch <code>/home/dion/Projekte</code> und die Docker-API (Host-Ports 2000–2999). Neues Repo klonen → Karte erscheint sofort mit Status „unbekannt". Damit echte Daten erscheinen, muss das Repo eine <code>PROJECT_STATUS.md</code> enthalten.</p>
+  </div>
+
+  <div class="panel">
+    <h2>PROJECT_STATUS.md · Format</h2>
+    <p>Frontmatter (YAML) + beliebiger Body. Diese Felder liest das Dashboard:</p>
+<pre>---
+status: planned | in-development | done
+progress: 0-100
+version: "1.2.3"
+tags: [web, docker]
+scope: "Kurzbeschreibung was das Projekt ist und wo es steht"
+last_updated: "2026-08-13"
+next_steps:
+  - Login-Flow fertigstellen
+  - Tests schreiben
+  - README aktualisieren
+---
+
+# Weitere Details / Notizen
+</pre>
+    <p><code>progress</code> fehlt → keine Bar. <code>version</code> fehlt → Fallback auf <code>package.json</code>-Version.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Template für neue Repos</h2>
+<pre>---
+status: planned
+progress: 0
+version: "0.1.0"
+tags: []
+scope: "TODO: Kurzbeschreibung des Projekts"
+last_updated: "2026-08-13"
+next_steps:
+  - TODO: erster Schritt
+---
+
+# Projektstatus
+</pre>
+  </div>
+
+  <div class="panel">
+    <h2>Agent-Regeln (AGENTS.md)</h2>
+    <p>Copy-paste in die globale <code>~/.config/opencode/AGENTS.md</code> (oder projektlokal), damit Coding-Agents den Status automatisch pflegen:</p>
+<pre>## Projektstatus-Pflicht
+- Jedes neue Projekt bekommt sofort eine PROJECT_STATUS.md (Template).
+- Bei Arbeiten in einem Repo ohne PROJECT_STATUS.md diese zuerst anlegen.
+- Todos der Aufgabe in `next_steps` spiegeln; bei Abschluss abhaken und `progress` anpassen.
+- Änderungen an PROJECT_STATUS.md committen + pushen (Doku: direct push auf main).
+- `last_updated` auf das heutige Datum setzen.
+</pre>
+    <p>Funktioniert identisch für Claude Code, Codex etc. — die Datei ist agent-agnostisch, nur Markdown.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Port-Ring</h2>
+    <p>Projekte belegen Host-Ports ab <strong>2000</strong> aufsteigend (2000, 2001, …). Das Dashboard zeigt nur Container aus diesem Bereich. Nächste freie Ports stehen in der globalen AGENTS.md. Das Dashboard selbst läuft auf <strong>12345</strong> (System-Port, außerhalb des Rings).</p>
+  </div>
+
+  <div class="panel">
+    <h2>Session-Resume (opencode://)</h2>
+    <p>Der 1-Klick-Link <code>opencode://session/&lt;id&gt;</code> startet Konsole + opencode mit der Session im richtigen Projektordner. Handler: <code>~/.local/bin/oc-resume</code> + <code>opencode-resume.desktop</code>. Neu registrieren:</p>
+<pre>xdg-mime default opencode-resume.desktop x-scheme-handler/opencode
+update-desktop-database ~/.local/share/applications
+</pre>
+  </div>
+
+  <div class="panel">
+    <h2>Autostart</h2>
+    <p>Chromium öffnet das Dashboard bei jedem Boot via <code>~/.config/autostart/dashboard.desktop</code>. Container läuft mit <code>restart: unless-stopped</code>.</p>
+  </div>
+
+  <a href="/" class="ghost-link" style="align-self:flex-start">← zurück</a>
+</div>
+</body>
+</html>

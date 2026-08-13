@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Dashboard</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo">◈ dashboard</div>
+    <input id="search" type="search" placeholder="Suchen…" autocomplete="off">
+    <nav>
+      <a href="/setup" class="ghost-link">setup</a>
+      <button id="refresh" class="ghost-btn">↻</button>
+    </nav>
+  </div>
+  <div id="tags" class="tags"></div>
+</header>
+<main id="grid" class="grid"></main>
+<footer><span id="clock"></span> · Ports <span id="ring"></span> · auto-refresh 60s</footer>
+<script src="/app.js"></script>
+</body>
+</html>
