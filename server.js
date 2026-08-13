@@ -33,25 +33,36 @@ function parseFrontmatter(text) {
   const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---/)
   if (!m) return {}
   const out = { next_steps: [], tags: [] }
+  let lastList = "next_steps"
   for (const line of m[1].split("\n")) {
     const t = line.trim()
     if (!t) continue
-    const kv = t.match(/^([A-Za-z0-9_-]+):\s*(.*)$/)
-    if (kv) {
-      const key = kv[1]
-      let val = kv[2].trim()
-      if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1)
-      if (/^-?\d+$/.test(val)) val = parseInt(val, 10)
-      out[key] = val
-      continue
-    }
     const li = t.match(/^-\s+(.*)$/)
     if (li) {
-      if (out.next_steps.length < 30 && !li[1].startsWith("tags:")) out.next_steps.push(li[1].trim())
+      if (lastList === "tags") out.tags.push(li[1].trim())
+      else out.next_steps.push(li[1].trim())
+      continue
     }
+    const kv = t.match(/^([A-Za-z0-9_-]+):\s*(.*)$/)
+    if (!kv) continue
+    const key = kv[1]
+    let val = kv[2].trim()
+    if (key === "tags") {
+      if (val.startsWith("[") && val.endsWith("]")) out.tags = val.slice(1, -1).split(",").map((x) => x.trim()).filter(Boolean)
+      else if (val) out.tags = val.split(",").map((x) => x.trim()).filter(Boolean)
+      lastList = "tags"
+      continue
+    }
+    if (key === "next_steps") {
+      if (val) out.next_steps.push(val)
+      lastList = "next_steps"
+      continue
+    }
+    if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1)
+    if (/^-?\d+$/.test(val)) val = parseInt(val, 10)
+    out[key] = val
+    lastList = "next_steps"
   }
-  if (typeof out.tags === "string") out.tags = out.tags.split(",").map((x) => x.trim()).filter(Boolean)
-  if (typeof out.next_steps === "string") out.next_steps = [out.next_steps]
   return out
 }
 
