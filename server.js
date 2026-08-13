@@ -72,6 +72,19 @@ function readStatus(repoDir) {
   return parseFrontmatter(fs.readFileSync(f, "utf8"))
 }
 
+function readChangelog(repoDir) {
+  const f = path.join(repoDir, "CHANGELOG.md")
+  if (!fs.existsSync(f)) return null
+  try {
+    const text = fs.readFileSync(f, "utf8")
+    const m = text.match(/^##\s+(\d{4}-\d{2}-\d{2})\s*[—–-]\s*(.+)$/m)
+    if (!m) return null
+    return { date: m[1], title: m[2].trim() }
+  } catch {
+    return null
+  }
+}
+
 function gitLast(repoDir) {
   try {
     const out = execFileSync("git", ["-C", repoDir, "--no-pager", "log", "-1", "--format=%H%x1f%aI%x1f%an%x1f%s"], {
@@ -186,6 +199,7 @@ async function buildState() {
       next_steps: (meta && meta.next_steps) || [],
       branch: gitBranch(dir),
       lastCommit,
+      lastLog: readChangelog(dir),
       staleDays,
       services,
       sessions: projSessions,

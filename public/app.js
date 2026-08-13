@@ -73,6 +73,7 @@ function card(p) {
       ${tags}
     </div>
     ${p.scope ? `<div class="scope">${p.scope}</div>` : ""}
+    ${p.lastLog ? `<div class="lastlog" title="letzter CHANGELOG-Eintrag">log: ${p.lastLog.date} — ${p.lastLog.title}</div>` : ""}
     ${steps ? `<ul class="steps">${steps}</ul>` : ""}
     ${svc ? `<div class="services">${svc}</div>` : ""}
     ${p.sessions && p.sessions.length ? `

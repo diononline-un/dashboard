@@ -69,6 +69,7 @@ nav { display: flex; gap: 10px; align-items: center; margin-left: auto; }
 .meta .stale-warn { color: var(--amber); }
 .meta .stale-hot { color: var(--red); text-shadow: 0 0 8px rgba(242,109,109,.4); }
 .scope { color: var(--muted); font-size: 11px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lastlog { color: #9fb6d4; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .steps { list-style: none; display: flex; flex-direction: column; gap: 4px; }
 .steps li { color: #aeb4bd; font-size: 11px; padding-left: 14px; position: relative; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .steps li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
