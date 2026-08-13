@@ -1,3 +1,5 @@
 node_modules
 .env
 data/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/

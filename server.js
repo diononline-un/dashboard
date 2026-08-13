@@ -99,6 +99,31 @@ function gitLast(repoDir) {
   }
 }
 
+function gitLog(repoDir, n = 15) {
+  try {
+    const out = execFileSync(
+      "git",
+      ["-C", repoDir, "--no-pager", "log", `-${n}`, "--format=%H%x1f%aI%x1f%an%x1f%s"],
+      { encoding: "utf8", timeout: 8000 }
+    ).trim()
+    if (!out) return []
+    return out.split("\n").map((line) => {
+      const [hash, date, author, subject] = line.split("\x1f")
+      return { hash: hash.slice(0, 8), date, author, subject }
+    })
+  } catch {
+    return []
+  }
+}
+
+function readReadme(repoDir) {
+  for (const f of ["README.md", "readme.md", "README.MD"]) {
+    const p = path.join(repoDir, f)
+    if (fs.existsSync(p)) return fs.readFileSync(p, "utf8").slice(0, 200000)
+  }
+  return ""
+}
+
 function gitBranch(repoDir) {
   try {
     return execFileSync("git", ["-C", repoDir, "rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8", timeout: 5000 }).trim()
@@ -228,7 +253,43 @@ async function buildState() {
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 25)
 
-  return { projects, sessions: sessions.slice(0, 30), activity, ring: { min: RING_MIN, max: RING_MAX } }
+  const dayAgo = Date.now() - 86400000
+  const stats = {
+    running: containers.filter((c) => c.state === "running" && c.ports.length).length,
+    totalServices: containers.filter((c) => c.ports.length).length,
+    byStatus: { planned: 0, "in-development": 0, done: 0, unknown: 0 },
+    stale: projects.filter((p) => p.staleDays !== null && p.staleDays >= 14).length,
+    commits24h: projects.filter((p) => p.lastCommit && new Date(p.lastCommit.date).getTime() > dayAgo).length,
+    sessions24h: sessions.filter((s) => Date.now() - s.updated < 86400000).length,
+  }
+  for (const p of projects) stats.byStatus[p.status] = (stats.byStatus[p.status] || 0) + 1
+
+  return { projects, sessions: sessions.slice(0, 30), activity, stats, ring: { min: RING_MIN, max: RING_MAX } }
+}
+
+function projectDetail(name) {
+  const dir = path.join(PROJECTS_DIR, name)
+  if (!fs.existsSync(path.join(dir, ".git"))) return null
+  const meta = readStatus(dir)
+  const projSessions = getSessions()
+    .filter((s) => s.directory.startsWith(dir + "/") || s.directory === dir)
+    .slice(0, 10)
+  return {
+    name,
+    dir,
+    github: `https://github.com/diononline-un/${name}`,
+    status: (meta && meta.status) || "unknown",
+    progress: meta && typeof meta.progress === "number" ? meta.progress : null,
+    version: (meta && meta.version) || pkgVersion(dir),
+    tags: (meta && meta.tags) || [],
+    scope: (meta && meta.scope) || "",
+    next_steps: (meta && meta.next_steps) || [],
+    branch: gitBranch(dir),
+    lastCommit: gitLast(dir),
+    commits: gitLog(dir, 15),
+    readme: readReadme(dir),
+    sessions: projSessions,
+  }
 }
 
 const MIME = { ".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml", ".json": "application/json" }
@@ -240,6 +301,66 @@ const server = http.createServer(async (req, res) => {
       const state = await buildState()
       res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" })
       return res.end(JSON.stringify(state))
+    }
+    const projMatch = url.pathname.match(/^\/api\/project\/([^/]+)$/)
+    if (projMatch) {
+      const detail = projectDetail(decodeURIComponent(projMatch[1]))
+      if (!detail) {
+        res.writeHead(404).end("not found")
+        return
+      }
+      res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" })
+      return res.end(JSON.stringify(detail))
+    }
+    const dockerMatch = url.pathname.match(/^\/api\/docker\/([^/]+)\/(restart|stop|logs)$/)
+    if (dockerMatch && req.method === "POST") {
+      const containerId = decodeURIComponent(dockerMatch[1])
+      const action = dockerMatch[2]
+      try {
+        const container = docker.getContainer(containerId)
+        if (action === "logs") {
+          const stream = await container.logs({ stdout: true, stderr: true, tail: 80, timestamps: false })
+          let text = ""
+          if (Buffer.isBuffer(stream)) {
+            text = stream.toString("utf8")
+          } else if (stream && typeof stream.on === "function") {
+            const chunks = []
+            await new Promise((resolve, reject) => {
+              stream.on("data", (c) => chunks.push(c))
+              stream.on("end", resolve)
+              stream.on("error", reject)
+            })
+            text = Buffer.concat(chunks).toString("utf8")
+          }
+          text = text.slice(-20000)
+          res.writeHead(200, { "Content-Type": "application/json" })
+          return res.end(JSON.stringify({ logs: text }))
+        }
+        if (action === "restart") await container.restart()
+        if (action === "stop") await container.stop()
+        res.writeHead(200, { "Content-Type": "application/json" })
+        return res.end(JSON.stringify({ ok: true }))
+      } catch (err) {
+        res.writeHead(500, { "Content-Type": "application/json" })
+        return res.end(JSON.stringify({ error: String(err.message || err) }))
+      }
+    }
+    if (url.pathname.startsWith("/vendor/")) {
+      const base = path.basename(url.pathname)
+      let vf = path.join(__dirname, "node_modules", base)
+      if (base === "marked.min.js") {
+        const candidates = [
+          path.join(__dirname, "node_modules", "marked", "marked.min.js"),
+          path.join(__dirname, "node_modules", "marked", "lib", "marked.umd.js"),
+        ]
+        vf = candidates.find((c) => fs.existsSync(c)) || vf
+      }
+      if (fs.existsSync(vf) && fs.statSync(vf).isFile()) {
+        res.writeHead(200, { "Content-Type": "text/javascript" })
+        return res.end(fs.readFileSync(vf))
+      }
+      res.writeHead(404).end("not found")
+      return
     }
     if (url.pathname === "/api/pin" && req.method === "POST") {
       let body = ""

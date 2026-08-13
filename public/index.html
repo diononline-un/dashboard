@@ -10,16 +10,46 @@
 <header>
   <div class="bar">
     <div class="logo">◈ dashboard</div>
+    <div id="widgets" class="widgets"></div>
     <input id="search" type="search" placeholder="Suchen…" autocomplete="off">
+    <select id="sort" class="ghost-btn">
+      <option value="stale">Staleness</option>
+      <option value="name">Name</option>
+      <option value="status">Status</option>
+      <option value="progress">Progress</option>
+    </select>
+    <div id="viewtoggle" class="viewtoggle">
+      <button id="view-grid" class="ghost-btn on" title="Grid">▦</button>
+      <button id="view-kanban" class="ghost-btn" title="Kanban">▤</button>
+    </div>
     <nav>
       <a href="/setup" class="ghost-link">setup</a>
       <button id="refresh" class="ghost-btn">↻</button>
     </nav>
   </div>
-  <div id="tags" class="tags"></div>
 </header>
-<main id="grid" class="grid"></main>
-<footer><span id="clock"></span> · Ports <span id="ring"></span> · auto-refresh 60s</footer>
+
+<div id="view">
+  <main id="grid" class="grid"></main>
+  <main id="kanban" class="kanban hidden">
+    <div class="kb-col" data-status="planned"><h3>planned</h3><div class="kb-list"></div></div>
+    <div class="kb-col" data-status="in-development"><h3>in development</h3><div class="kb-list"></div></div>
+    <div class="kb-col" data-status="done"><h3>done</h3><div class="kb-list"></div></div>
+    <div class="kb-col" data-status="unknown"><h3>unbekannt</h3><div class="kb-list"></div></div>
+  </main>
+  <main id="detail" class="detail hidden"></main>
+</div>
+
+<section class="activity">
+  <h2>github activity</h2>
+  <div id="act"></div>
+</section>
+
+<footer>
+  <span id="clock"></span> · Ports <span id="ring"></span> · auto-refresh 60s
+  <div id="tags" class="tags"></div>
+</footer>
+<script src="/vendor/marked.min.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>
