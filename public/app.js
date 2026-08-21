@@ -22,7 +22,9 @@ const STATUS_LABEL = {
   planned: "planned",
   "in-development": "in development",
   active: "in development",
+  "on-hold": "on hold",
   done: "done",
+  archived: "archiviert",
 }
 
 function staleInfo(days) {

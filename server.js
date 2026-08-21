@@ -257,7 +257,7 @@ async function buildState() {
   const stats = {
     running: containers.filter((c) => c.state === "running" && c.ports.length).length,
     totalServices: containers.filter((c) => c.ports.length).length,
-    byStatus: { planned: 0, "in-development": 0, done: 0, unknown: 0 },
+    byStatus: { planned: 0, "in-development": 0, "on-hold": 0, done: 0, archived: 0, unknown: 0 },
     stale: projects.filter((p) => p.staleDays !== null && p.staleDays >= 14).length,
     commits24h: projects.filter((p) => p.lastCommit && new Date(p.lastCommit.date).getTime() > dayAgo).length,
     sessions24h: sessions.filter((s) => Date.now() - s.updated < 86400000).length,
