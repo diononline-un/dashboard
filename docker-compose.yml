@@ -16,7 +16,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /home/dion/Projekte:/data/projects:ro
-      - /home/dion/.local/share/opencode/opencode.db:/data/opencode/opencode.db:ro
+      - /data/opencode/opencode.db:/data/opencode/opencode.db:ro
       - dashboard_data:/app/data
 
 volumes:
